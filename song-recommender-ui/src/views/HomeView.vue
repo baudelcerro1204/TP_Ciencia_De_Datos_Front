@@ -9,7 +9,7 @@
         <input
           v-model="searchQuery"
           @input="filterSongs"
-          placeholder="Buscar canción o artista..."
+          placeholder="Buscar canción..."
           class="modern-input"
         />
       </div>
