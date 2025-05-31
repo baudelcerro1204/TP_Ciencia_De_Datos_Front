@@ -1,11 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import SongRecommender from '../components/SongRecommender.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'Home',
+    name: 'home',
     component: HomeView
+  },
+  {
+    path: '/recommender',
+    name: 'recommender',
+    component: SongRecommender
   }
 ]
 

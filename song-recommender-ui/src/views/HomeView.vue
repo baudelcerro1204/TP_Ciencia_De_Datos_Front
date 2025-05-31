@@ -28,6 +28,7 @@
     </div>
 
     <div class="right-panel">
+      <!-- Selección canción existente -->
       <div v-if="selectedSong" class="song-details">
         <p class="mb-2">
           🎧 Seleccionado: <strong>{{ selectedSong.name }}</strong> - {{ selectedSong.artist }}
@@ -49,10 +50,28 @@
         </button>
       </div>
 
+      <!-- Botón para abrir modal -->
+      <button
+        class="bg-green-600 text-white px-4 py-2 rounded mt-4 hover:bg-green-700"
+        @click="showModal = true"
+      >
+        Agregar nueva canción
+      </button>
+
+      <!-- Modal con SongRecommender -->
+      <SongRecommender
+        v-if="showModal"
+        @close="showModal = false"
+        @new-recommendations="handleNewRecommendations"
+      />
+
       <div v-if="similarTracks.length" class="recommendations mt-6">
         <h2 class="text-lg font-semibold mb-2">🎯 Recomendaciones:</h2>
         <ul>
-          <li v-for="track in similarTracks" :key="track.track_id">
+          <li
+            v-for="track in similarTracks"
+            :key="track.track_id || track.name + track.artist"
+          >
             {{ track.name }} - {{ track.artist }}
           </li>
         </ul>
@@ -64,6 +83,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import SongRecommender from '@/components/SongRecommender.vue' // Ajusta la ruta si es necesario
 
 const searchQuery = ref('')
 const songs = ref([])
@@ -73,6 +93,8 @@ const k = ref(5)
 const similarTracks = ref([])
 const loading = ref(false)
 const error = ref(null)
+const genres = ref([])
+const showModal = ref(false)
 
 onMounted(async () => {
   loading.value = true
@@ -80,8 +102,15 @@ onMounted(async () => {
     const res = await axios.get('http://localhost:8000/data/songs')
     songs.value = res.data
     filteredSongs.value = res.data
-  } catch (err) {
+  } catch {
     error.value = '❌ Error al cargar canciones.'
+  }
+
+  try {
+    const res = await axios.get('http://localhost:8000/genre/list')
+    genres.value = res.data
+  } catch {
+    genres.value = []
   } finally {
     loading.value = false
   }
@@ -89,7 +118,7 @@ onMounted(async () => {
 
 const filterSongs = () => {
   const q = searchQuery.value.toLowerCase()
-  filteredSongs.value = songs.value.filter(song =>
+  filteredSongs.value = songs.value.filter((song) =>
     song.name.toLowerCase().includes(q)
   )
 }
@@ -102,19 +131,24 @@ const selectSong = (song) => {
 }
 
 const searchSimilar = async () => {
-  const { name, artist } = selectedSong.value
+  if (!selectedSong.value) return
   try {
     const res = await axios.get('http://localhost:8000/recommend/track', {
       params: {
-        artist,
-        track: name,
-        k: k.value
-      }
+        artist: selectedSong.value.artist,
+        track: selectedSong.value.name,
+        k: k.value,
+      },
     })
     similarTracks.value = res.data
-  } catch (err) {
+  } catch {
     error.value = '❌ Error al obtener recomendaciones.'
   }
+}
+
+const handleNewRecommendations = (recs) => {
+  similarTracks.value = recs
+  showModal.value = false
 }
 </script>
 
