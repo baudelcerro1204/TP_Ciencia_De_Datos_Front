@@ -132,11 +132,15 @@ const selectSong = (song) => {
 
 const searchSimilar = async () => {
   if (!selectedSong.value) return
+
+  const artist = selectedSong.value.artist.trim().toLowerCase()
+  const track = selectedSong.value.name.trim().toLowerCase()
+
   try {
     const res = await axios.get('http://localhost:8000/recommend/track', {
       params: {
-        artist: selectedSong.value.artist,
-        track: selectedSong.value.name,
+        artist,
+        track,
         k: k.value,
       },
     })
@@ -145,6 +149,7 @@ const searchSimilar = async () => {
     error.value = '❌ Error al obtener recomendaciones.'
   }
 }
+
 
 const handleNewRecommendations = (recs) => {
   similarTracks.value = recs
