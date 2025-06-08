@@ -58,6 +58,15 @@
         Agregar nueva canción
       </button>
 
+
+      <!-- Botón para abrir modal de películas -->
+      <button
+        class="bg-purple-600 text-white px-4 py-2 rounded mt-2 hover:bg-purple-700"
+        @click="showMovieModal = true"
+      >
+        Buscar películas asociadas a canción
+      </button>
+
       <!-- Modal con SongRecommender -->
       <SongRecommender
         v-if="showModal"
@@ -76,8 +85,33 @@
           </li>
         </ul>
       </div>
-    </div>
+    
+      <!-- Modal para buscar películas -->
+      <div v-if="showMovieModal" class="modal-backdrop" @click.self="showMovieModal = false">
+        <div class="modal-content">
+          <button class="modal-close" @click="showMovieModal = false">✖</button>
+          <h3 class="font-semibold mb-3">🎬 Buscar películas por canción</h3>
+          <label class="block mb-2 modern-label">Nombre exacto de la canción:</label>
+          <input
+            v-model="movieSearchName"
+            type="text"
+            placeholder="Ej: Smells Like Teen Spirit"
+            class="modern-input"
+          />
+          <button @click="fetchMoviesForSong" class="btn-primary mt-4">Buscar películas</button>
+          <p v-if="movieError" class="text-red-500 mt-2">{{ movieError }}</p>
+
+          <div v-if="movieResults.length" class="mt-4">
+            <h4 class="font-semibold mb-2">📽️ Películas/Álbumes encontrados:</h4>
+            <ul>
+              <li v-for="m in movieResults" :key="m">🎵 {{ m }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
   </div>
+</div>
 </template>
 
 <script setup>
@@ -155,6 +189,59 @@ const handleNewRecommendations = (recs) => {
   similarTracks.value = recs
   showModal.value = false
 }
+
+const showMovieModal = ref(false)
+const movieSearchName = ref('')
+const movieResults = ref([])
+const movieError = ref(null)
+
+const fetchMoviesForSong = async () => {
+  movieError.value = null
+  movieResults.value = []
+
+  if (!movieSearchName.value.trim()) {
+    movieError.value = '⚠️ Ingresá el nombre de la canción.'
+    return
+  }
+
+  try {
+    const res = await axios.get('http://localhost:8000/data/movie_from_name', {
+      params: { nombre: movieSearchName.value.trim() }
+    })
+    movieResults.value = res.data.movies
+  } catch (err) {
+    movieError.value = err.response?.data?.detail || '❌ Error al buscar películas.'
+    console.error(err)
+  }
+}
+
+
+const trackInput = ref('')
+const trackError = ref(null)
+
+const submitTrackName = async () => {
+  trackError.value = null
+  similarTracks.value = []
+
+  if (!trackInput.value.includes('-')) {
+    trackError.value = '⚠️ Usá el formato "Canción - Artista"'
+    return
+  }
+
+  try {
+    const res = await axios.post('http://localhost:8000/data/add_by_name', {
+      name: trackInput.value.trim()
+    }, {
+      params: { k: 5 }
+    })
+    similarTracks.value = res.data.recommendations || []
+    showModal.value = false
+  } catch (err) {
+    trackError.value = '❌ No se pudo agregar la canción.'
+    console.error(err)
+  }
+}
+
 </script>
 
 <style scoped>
