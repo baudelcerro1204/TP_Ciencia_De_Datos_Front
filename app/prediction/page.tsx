@@ -11,8 +11,10 @@ import { ArrowLeft, Upload, Music, TrendingUp } from "lucide-react"
 import { PredictionRadarChart } from "@/components/prediction-radar-chart"
 
 export default function PredictionPage() {
+  const [audioFile, setAudioFile] = useState<File | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showResults, setShowResults] = useState(false)
+
   const [attributes, setAttributes] = useState({
     energy: [75],
     danceability: [68],
@@ -22,20 +24,57 @@ export default function PredictionPage() {
     tempo: [128],
   })
 
-  const handleAnalyze = () => {
-    setIsAnalyzing(true)
-    setTimeout(() => {
-      setIsAnalyzing(false)
-      setShowResults(true)
-    }, 2000)
-  }
+  const [popularityScore, setPopularityScore] = useState<number>(78)
+  const [assignedCluster, setAssignedCluster] = useState<string>("Electrónica Comercial")
 
-  const popularityScore = 78
-  const assignedCluster = "Electrónica Comercial"
+  const handleAnalyze = async () => {
+    if (!audioFile) {
+      alert("Por favor selecciona un archivo de audio primero.")
+      return
+    }
+
+    setIsAnalyzing(true)
+    const formData = new FormData()
+    formData.append("file", audioFile)
+
+    try {
+      const res = await fetch("http://localhost:8000/predict-audio", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!res.ok) {
+        throw new Error("Error en la predicción")
+      }
+
+      const result = await res.json()
+      console.log("Resultado recibido:", result)
+
+      // Suponiendo que el backend devuelve: { popularity: 72, cluster: "Electrónica Comercial", features: { energy: ..., ... } }
+      setPopularityScore(result.popularity)
+      setAssignedCluster(result.cluster || "Desconocido")
+      if (result.features) {
+        setAttributes({
+          energy: [Math.round(result.features.energy * 100)],
+          danceability: [Math.round(result.features.danceability * 100)],
+          valence: [Math.round(result.features.valence * 100)],
+          acousticness: [Math.round(result.features.acousticness * 100)],
+          instrumentalness: [Math.round(result.features.instrumentalness * 100)],
+          tempo: [Math.round(result.features.tempo)],
+        })
+      }
+
+      setShowResults(true)
+    } catch (error) {
+      console.error(error)
+      alert("Hubo un error al analizar el archivo.")
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -88,7 +127,10 @@ export default function PredictionPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+                <div
+                  className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer"
+                  onClick={() => document.getElementById("fileInput")?.click()}
+                >
                   <Music className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                   <p className="text-slate-600 mb-2">Arrastra tu archivo aquí o haz clic para seleccionar</p>
                   <p className="text-sm text-slate-500">Formatos soportados: MP3, WAV (máx. 10MB)</p>
@@ -96,6 +138,21 @@ export default function PredictionPage() {
                     Seleccionar Archivo
                   </Button>
                 </div>
+                <input
+                  id="fileInput"
+                  type="file"
+                  accept=".mp3,.wav"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) setAudioFile(file)
+                  }}
+                />
+                {audioFile && (
+                  <p className="text-sm text-slate-700 mt-2">
+                    Archivo seleccionado: <strong>{audioFile.name}</strong>
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -103,9 +160,7 @@ export default function PredictionPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Atributos Manuales</CardTitle>
-                <p className="text-sm text-slate-600">
-                  Ajusta los valores manualmente si prefieres no subir un archivo
-                </p>
+                <p className="text-sm text-slate-600">Ajusta los valores manualmente si prefieres no subir un archivo</p>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
@@ -118,7 +173,6 @@ export default function PredictionPage() {
                     className="mt-2"
                   />
                 </div>
-
                 <div>
                   <Label className="text-sm font-medium">Bailabilidad: {attributes.danceability[0]}%</Label>
                   <Slider
@@ -129,7 +183,6 @@ export default function PredictionPage() {
                     className="mt-2"
                   />
                 </div>
-
                 <div>
                   <Label className="text-sm font-medium">Valencia (Positividad): {attributes.valence[0]}%</Label>
                   <Slider
@@ -140,7 +193,6 @@ export default function PredictionPage() {
                     className="mt-2"
                   />
                 </div>
-
                 <div>
                   <Label className="text-sm font-medium">Acústico: {attributes.acousticness[0]}%</Label>
                   <Slider
@@ -151,7 +203,6 @@ export default function PredictionPage() {
                     className="mt-2"
                   />
                 </div>
-
                 <div>
                   <Label className="text-sm font-medium">Instrumental: {attributes.instrumentalness[0]}%</Label>
                   <Slider
@@ -162,13 +213,17 @@ export default function PredictionPage() {
                     className="mt-2"
                   />
                 </div>
-
                 <div>
                   <Label className="text-sm font-medium">Tempo (BPM)</Label>
                   <Input
                     type="number"
                     value={attributes.tempo[0]}
-                    onChange={(e) => setAttributes({ ...attributes, tempo: [Number.parseInt(e.target.value) || 120] })}
+                    onChange={(e) =>
+                      setAttributes({
+                        ...attributes,
+                        tempo: [Number.parseInt(e.target.value) || 120],
+                      })
+                    }
                     className="mt-2"
                     min="60"
                     max="200"
@@ -184,7 +239,7 @@ export default function PredictionPage() {
 
           {/* Results Section */}
           <div className="space-y-6">
-            {showResults && (
+            {showResults ? (
               <>
                 {/* Popularity Score */}
                 <Card>
@@ -198,8 +253,8 @@ export default function PredictionPage() {
                           popularityScore >= 80
                             ? "text-green-600"
                             : popularityScore >= 60
-                              ? "text-yellow-600"
-                              : "text-red-600"
+                            ? "text-yellow-600"
+                            : "text-red-600"
                         }`}
                       >
                         {popularityScore}
@@ -210,15 +265,15 @@ export default function PredictionPage() {
                           popularityScore >= 80
                             ? "bg-green-100 text-green-800"
                             : popularityScore >= 60
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
                         }`}
                       >
                         {popularityScore >= 80
                           ? "Alto potencial"
                           : popularityScore >= 60
-                            ? "Potencial moderado"
-                            : "Potencial bajo"}
+                          ? "Potencial moderado"
+                          : "Potencial bajo"}
                       </div>
                     </div>
                   </CardContent>
@@ -254,9 +309,7 @@ export default function PredictionPage() {
                   </CardContent>
                 </Card>
               </>
-            )}
-
-            {!showResults && (
+            ) : (
               <Card className="h-96 flex items-center justify-center">
                 <CardContent className="text-center">
                   <Music className="h-16 w-16 text-slate-300 mx-auto mb-4" />

@@ -11,7 +11,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
             <Music className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-slate-800">Radar Sonoro</h1>
+            <h1 className="text-2xl font-bold text-slate-800">HitSense</h1>
           </div>
         </div>
       </header>
@@ -19,11 +19,10 @@ export default function HomePage() {
       {/* Hero Section */}
       <main className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl font-bold text-slate-800 mb-6">Radar Sonoro</h1>
-          <p className="text-xl text-slate-600 mb-4">Optimiza el impacto comercial de tu música</p>
+          <h1 className="text-5xl font-bold text-slate-800 mb-6">HitSense</h1>
+          <p className="text-xl text-slate-600 mb-4">Midiendo el éxito de la música</p>
           <p className="text-lg text-slate-500 mb-12 max-w-2xl mx-auto">
-            Analiza tus canciones, descubre patrones de éxito y optimiza tu producción para plataformas comerciales como
-            stock music, publicidad y cine.
+            Analiza tus canciones, descubre patrones de éxito y optimiza tu producción para mayor impacto comercial.
           </p>
 
           <Link href="/radar">
@@ -87,7 +86,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-slate-800 text-white py-8 mt-20">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-slate-300 mb-2">Desarrollado por [Tu Nombre]</p>
+          <p className="text-slate-300 mb-2">Desarrollado por HitSense</p>
           <p className="text-sm text-slate-400">
             Proyecto académico - No oficial. Diseñado para productores musicales profesionales.
           </p>
