@@ -152,7 +152,7 @@ export default function ReservationDashboard() {
                     <TableHead>Huésped</TableHead>
                     <TableHead>Llegada</TableHead>
                     <TableHead>Salida</TableHead>
-                    <TableHead>ADR</TableHead>
+                    <TableHead>Monto de Reserva</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>

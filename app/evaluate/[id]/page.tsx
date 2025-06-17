@@ -20,10 +20,13 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+
 interface ReservationData {
   id: string;
   guest_name: string;
-  arrival_date: string;
+  arrival_date_year: number
+  arrival_date_month: string
+  arrival_date_day_of_month: number
   departure_date: string;
   lead_time: number;
   adults: number;
@@ -206,14 +209,14 @@ export default function EvaluateReservation({
                 <div className="space-y-1">
                   <p>
                     <span className="font-medium">Llegada:</span>{" "}
-                    {reservation.arrival_date}
+                    {`${reservation.arrival_date_day_of_month} ${reservation.arrival_date_month} ${reservation.arrival_date_year}`}
                   </p>
                   <p>
                     <span className="font-medium">Salida:</span>{" "}
                     {reservation.departure_date}
                   </p>
                   <p>
-                    <span className="font-medium">Lead Time:</span>{" "}
+                    <span className="font-medium">Tiempo de Anticipación:</span>{" "}
                     {reservation.lead_time} días
                   </p>
                 </div>
@@ -243,7 +246,7 @@ export default function EvaluateReservation({
                 </h3>
                 <div className="space-y-1">
                   <p>
-                    <span className="font-medium">ADR:</span> ${reservation.adr}
+                    <span className="font-medium">Monto de Reserva:</span> ${reservation.adr}
                   </p>
                   <p>
                     <span className="font-medium">Tipo de Depósito:</span>{" "}
