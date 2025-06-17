@@ -1,25 +1,20 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-
-const inter = Inter({ subsets: ["latin"] })
+import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: "Radar Sonoro - Optimiza el impacto comercial de tu música",
-  description:
-    "Aplicación web para productores musicales que permite analizar canciones y optimizar su producción para plataformas comerciales.",
-    generator: 'v0.dev'
+  title: 'v0 App',
+  description: 'Created with v0',
+  generator: 'v0.dev',
 }
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode
-}) {
+}>) {
   return (
-    <html lang="es">
-      <body className={inter.className}>{children}</body>
+    <html lang="en">
+      <body>{children}</body>
     </html>
   )
 }
