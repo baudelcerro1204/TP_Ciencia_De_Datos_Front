@@ -163,7 +163,13 @@ export default function ReservationDashboard() {
                       <TableCell className="font-medium text-xs">{reservation.id}</TableCell>
                       <TableCell>{reservation.guest_name}</TableCell>
                       <TableCell>{`${reservation.arrival_date_day_of_month} ${reservation.arrival_date_month} ${reservation.arrival_date_year}`}</TableCell>
-                      <TableCell>{reservation.departure_date}</TableCell>
+                      <TableCell>
+                        {new Date(reservation.departure_date + "T12:00:00").toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </TableCell>
                       <TableCell>${reservation.adr}</TableCell>
                       <TableCell>
                         <Badge variant={reservation.status === "Confirmada" ? "default" : "secondary"}>

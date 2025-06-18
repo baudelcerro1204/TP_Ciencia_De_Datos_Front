@@ -128,13 +128,19 @@ export default function EvaluateReservation({
   
 
   const getRecommendation = (probability: number) => {
-    if (probability > 0.75) {
+    if (probability > 0.50) {
       return {
         text: "Sugerir depósito no reembolsable",
         icon: <AlertTriangle className="w-4 h-4 text-red-500" />,
         color: "destructive",
       };
-    } else if (probability < 0.25) {
+    } else if (probability > 0.20 && probability <= 0.50) {
+      return {
+        text: "No se requieren acciones inmediatas.",
+        icon: <CheckCircle className="w-4 h-4 text-blue-500" />,
+        color: "secondary",
+      };
+    } else if (probability < 0.20) {
       return {
         text: "Evaluar upgrade gratuito o beneficio",
         icon: <CheckCircle className="w-4 h-4 text-green-500" />,
@@ -212,8 +218,12 @@ export default function EvaluateReservation({
                     {`${reservation.arrival_date_day_of_month} ${reservation.arrival_date_month} ${reservation.arrival_date_year}`}
                   </p>
                   <p>
-                    <span className="font-medium">Salida:</span>{" "}
-                    {reservation.departure_date}
+                  <span className="font-medium">Salida:</span>{" "}
+                  {new Date(reservation.departure_date + "T12:00:00").toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                    })}
                   </p>
                   <p>
                     <span className="font-medium">Tiempo de Anticipación:</span>{" "}
