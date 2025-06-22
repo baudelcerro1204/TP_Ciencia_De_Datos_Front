@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,14 @@ import {
   MapPin,
   Loader2,
   ArrowLeft,
+  BarChart3,
+  Target,
+  Shield,
+  Gift,
+  MessageSquare,
+  Star,
+  Clock,
+  Phone,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -59,8 +68,122 @@ interface ClusterResult {
   cluster_name: string
   cancellation_rate: number
   strategy: string
+  strategy_icon: React.ReactNode
+  strategy_color: string
 }
 
+// Definición de estrategias por segmento
+const SEGMENT_STRATEGIES = {
+  0: [
+    {
+      name: "Recordatorio Personalizado",
+      description: "Enviar recordatorio personalizado 7 días antes de la llegada con detalles específicos de la reserva y beneficios exclusivos.",
+      icon: <MessageSquare className="w-5 h-5" />,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-200"
+    },
+    {
+      name: "Programa de Fidelización",
+      description: "Ofrecer puntos de fidelización adicionales y acceso anticipado a promociones especiales para reservas anticipadas.",
+      icon: <Star className="w-5 h-5" />,
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50",
+      borderColor: "border-yellow-200"
+    },
+    {
+      name: "Confirmación Proactiva",
+      description: "Contacto telefónico 14 días antes para confirmar detalles y ofrecer servicios adicionales personalizados.",
+      icon: <Phone className="w-5 h-5" />,
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      borderColor: "border-green-200"
+    },
+    {
+      name: "Beneficios Anticipados",
+      description: "Descuento del 10% en servicios adicionales y upgrade gratuito de habitación si está disponible.",
+      icon: <Gift className="w-5 h-5" />,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+      borderColor: "border-purple-200"
+    }
+  ],
+  1: [
+    {
+      name: "Oferta de Valor",
+      description: "Paquete especial con desayuno incluido y acceso gratuito al spa por reservas de planificación media.",
+      icon: <Gift className="w-5 h-5" />,
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      borderColor: "border-green-200"
+    },
+    {
+      name: "Comunicación Estratégica",
+      description: "Serie de emails informativos sobre servicios del hotel y actividades locales 10 días antes de la llegada.",
+      icon: <MessageSquare className="w-5 h-5" />,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-200"
+    },
+    {
+      name: "Flexibilidad de Reserva",
+      description: "Permitir cambios de fecha sin cargo hasta 48 horas antes y opción de cancelación gratuita.",
+      icon: <Clock className="w-5 h-5" />,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-200"
+    },
+    {
+      name: "Experiencia Personalizada",
+      description: "Asignación de un concierge personal para coordinar servicios especiales y preferencias del huésped.",
+      icon: <Users className="w-5 h-5" />,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+      borderColor: "border-purple-200"
+    }
+  ],
+  2: [
+    {
+      name: "Atención Premium",
+      description: "Servicio VIP con check-in prioritario, habitación preparada antes de la llegada y amenities de lujo.",
+      icon: <Star className="w-5 h-5" />,
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50",
+      borderColor: "border-yellow-200"
+    },
+    {
+      name: "Confirmación Inmediata",
+      description: "Contacto telefónico inmediato para confirmar la reserva y coordinar servicios especiales requeridos.",
+      icon: <Phone className="w-5 h-5" />,
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      borderColor: "border-green-200"
+    },
+    {
+      name: "Gestión de Expectativas",
+      description: "Comunicación clara sobre políticas de cancelación y opciones de reembolso para reservas especiales.",
+      icon: <MessageSquare className="w-5 h-5" />,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-200"
+    },
+    {
+      name: "Servicios Exclusivos",
+      description: "Acceso a servicios premium como traslado desde el aeropuerto y reservas en restaurantes exclusivos.",
+      icon: <Gift className="w-5 h-5" />,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+      borderColor: "border-purple-200"
+    }
+  ]
+};
+
+// Función para seleccionar estrategia aleatoria
+const getRandomStrategy = (cluster: number) => {
+  const strategies = SEGMENT_STRATEGIES[cluster as keyof typeof SEGMENT_STRATEGIES] || SEGMENT_STRATEGIES[0];
+  const randomIndex = Math.floor(Math.random() * strategies.length);
+  return strategies[randomIndex];
+};
 
 export default function EvaluateReservation({
   params,
@@ -101,23 +224,23 @@ export default function EvaluateReservation({
       if (!response.ok) throw new Error("Error al obtener predicción")
   
       const result = await response.json()
+      
+      // Seleccionar estrategia aleatoria
+      const randomStrategy = getRandomStrategy(result.cluster);
+      
+      setClusterResult({
+        cluster: result.cluster,
+        cluster_name: result.cluster_nombre,
+        cancellation_rate: result.probabilidad_cancelacion_cluster,
+        strategy: randomStrategy.description,
+        strategy_icon: randomStrategy.icon,
+        strategy_color: randomStrategy.color,
+      })
   
       setPredictionResult({
         probabilidad_cancelacion: result.probabilidad_cancelacion,
         prediccion: result.prediccion,
         explicacion_shap: result.explicacion_shap,
-      })
-  
-      setClusterResult({
-        cluster: result.cluster,
-        cluster_name: result.cluster_nombre,
-        cancellation_rate: result.probabilidad_cancelacion_cluster,
-        strategy:
-          result.cluster === 0
-            ? "Reservas anticipadas - Enviar recordatorio personalizado"
-            : result.cluster === 1
-            ? "Planificación media - Ofrecer beneficios moderados"
-            : "Reservas especiales - Priorizar atención y confirmación",
       })
     } catch (error) {
       console.error("Error:", error)
@@ -131,37 +254,50 @@ export default function EvaluateReservation({
     if (probability > 0.50) {
       return {
         text: "Sugerir depósito no reembolsable",
-        icon: <AlertTriangle className="w-4 h-4 text-red-500" />,
+        icon: <AlertTriangle className="w-5 h-5 text-red-500" />,
         color: "destructive",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-200",
       };
     } else if (probability > 0.20 && probability <= 0.50) {
       return {
         text: "No se requieren acciones inmediatas.",
-        icon: <CheckCircle className="w-4 h-4 text-blue-500" />,
+        icon: <CheckCircle className="w-5 h-5 text-blue-500" />,
         color: "secondary",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-200",
       };
     } else if (probability < 0.20) {
       return {
         text: "Evaluar upgrade gratuito o beneficio",
-        icon: <CheckCircle className="w-4 h-4 text-green-500" />,
+        icon: <CheckCircle className="w-5 h-5 text-green-500" />,
         color: "default",
+        bgColor: "bg-green-50",
+        borderColor: "border-green-200",
       };
     } else {
       return {
         text: "Sin acción requerida",
-        icon: <CheckCircle className="w-4 h-4 text-blue-500" />,
+        icon: <CheckCircle className="w-5 h-5 text-blue-500" />,
         color: "secondary",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-200",
       };
     }
   };
 
   if (!reservation) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-gray-400" />
-          <p className="mt-2 text-gray-600">
-            Cargando información de la reserva...
+          <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Cargando información
+          </h3>
+          <p className="text-gray-600">
+            Obteniendo datos de la reserva...
           </p>
         </div>
       </div>
@@ -169,118 +305,161 @@ export default function EvaluateReservation({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header Section */}
         <div className="mb-8">
           <Button
             variant="ghost"
-            className="mb-4"
+            className="mb-6 hover:bg-white/80 backdrop-blur-sm transition-all duration-200 rounded-xl"
             onClick={() => router.push("/")}
           >
-            {" "}
-            <ArrowLeft className="w-4 h-4 mr-2" /> Volver al listado{" "}
+            <ArrowLeft className="w-5 h-5 mr-2" /> 
+            Volver al Dashboard
           </Button>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                Evaluación de Reserva: {reservation.id}
-              </h1>
-              <p className="text-gray-600">Huésped: {reservation.guest_name}</p>
+              <div className="flex items-center gap-4 mb-3">
+                <Image src="/logo.png" alt="Hotel Logo" width={64} height={64} className="rounded-lg" />
+                <div>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                    Evaluación de Reserva
+                  </h1>
+                  <p className="text-gray-600 mt-1 text-lg">Análisis predictivo y recomendaciones</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 mt-4">
+                <Badge className="px-4 py-2 text-sm font-medium bg-blue-100 text-blue-800 border-blue-200">
+                  ID: {reservation.id}
+                </Badge>
+                <Badge 
+                  variant={reservation.status === "Confirmada" ? "default" : "secondary"}
+                  className={`px-4 py-2 text-sm font-medium ${
+                    reservation.status === "Confirmada" 
+                      ? "bg-green-100 text-green-800 border-green-200" 
+                      : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                  }`}
+                >
+                  {reservation.status}
+                </Badge>
+              </div>
             </div>
-            <Badge
-              variant={
-                reservation.status === "Confirmada" ? "default" : "secondary"
-              }
-              className="text-sm px-3 py-1"
-            >
-              {reservation.status}
-            </Badge>
+            
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/20">
+              <h3 className="font-semibold text-gray-900 mb-2">Huésped</h3>
+              <p className="text-2xl font-bold text-gray-900">{reservation.guest_name}</p>
+            </div>
           </div>
         </div>
 
-        {/* Detalles de la reserva */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
+        {/* Reservation Details Card */}
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-2xl mb-8">
+          <CardHeader className="pb-6">
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
+                <Calendar className="w-6 h-6 text-white" />
+              </div>
               Detalles de la Reserva
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <h3 className="font-medium text-gray-500 mb-2">
-                  Información General
-                </h3>
-                <div className="space-y-1">
-                  <p>
-                    <span className="font-medium">Llegada:</span>{" "}
-                    {`${reservation.arrival_date_day_of_month} ${reservation.arrival_date_month} ${reservation.arrival_date_year}`}
-                  </p>
-                  <p>
-                  <span className="font-medium">Salida:</span>{" "}
-                  {new Date(reservation.departure_date + "T12:00:00").toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                    })}
-                  </p>
-                  <p>
-                    <span className="font-medium">Tiempo de Anticipación:</span>{" "}
-                    {reservation.lead_time} días
-                  </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Calendar className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Información General</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Llegada:</span>
+                    <span className="font-medium text-gray-900">
+                      {`${reservation.arrival_date_day_of_month} ${reservation.arrival_date_month} ${reservation.arrival_date_year}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Salida:</span>
+                    <span className="font-medium text-gray-900">
+                      {new Date(reservation.departure_date + "T12:00:00").toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-600">Anticipación:</span>
+                    <span className="font-medium text-gray-900">{reservation.lead_time} días</span>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <h3 className="font-medium text-gray-500 mb-2">Huéspedes</h3>
-                <div className="space-y-1">
-                  <p>
-                    <span className="font-medium">Adultos:</span>{" "}
-                    {reservation.adults}
-                  </p>
-                  <p>
-                    <span className="font-medium">Niños:</span>{" "}
-                    {reservation.children}
-                  </p>
-                  <p>
-                    <span className="font-medium">Bebés:</span>{" "}
-                    {reservation.babies}
-                  </p>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Users className="w-5 h-5 text-green-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Huéspedes</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Adultos:</span>
+                    <span className="font-medium text-gray-900">{reservation.adults}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Niños:</span>
+                    <span className="font-medium text-gray-900">{reservation.children}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-600">Bebés:</span>
+                    <span className="font-medium text-gray-900">{reservation.babies}</span>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <h3 className="font-medium text-gray-500 mb-2">
-                  Detalles de Pago
-                </h3>
-                <div className="space-y-1">
-                  <p>
-                    <span className="font-medium">Monto de Reserva:</span> ${reservation.adr}
-                  </p>
-                  <p>
-                    <span className="font-medium">Tipo de Depósito:</span>{" "}
-                    {reservation.deposit_type}
-                  </p>
-                  <p>
-                    <span className="font-medium">Segmento:</span>{" "}
-                    {reservation.market_segment}
-                  </p>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <DollarSign className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Detalles de Pago</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Monto:</span>
+                    <span className="font-bold text-green-600">${reservation.adr.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Depósito:</span>
+                    <span className="font-medium text-gray-900">{reservation.deposit_type}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-600">Segmento:</span>
+                    <span className="font-medium text-gray-900">{reservation.market_segment}</span>
+                  </div>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Predicción de Cancelación */}
+        {/* Analysis Results Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Prediction Card */}
           {loading ? (
-            <Card>
-              <CardContent className="flex items-center justify-center h-64">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-2xl">
+              <CardContent className="flex items-center justify-center h-80">
                 <div className="text-center">
-                  <Loader2 className="w-8 h-8 mx-auto animate-spin text-gray-400" />
-                  <p className="mt-2 text-gray-600">
-                    Analizando datos de la reserva...
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Analizando datos
+                  </h3>
+                  <p className="text-gray-600">
+                    Procesando información de la reserva...
                   </p>
                 </div>
               </CardContent>
@@ -288,92 +467,88 @@ export default function EvaluateReservation({
           ) : (
             <>
               {predictionResult && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5" />
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-2xl">
+                  <CardHeader className="pb-6">
+                    <CardTitle className="flex items-center gap-3 text-2xl">
+                      <div className="p-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg">
+                        <Target className="w-6 h-6 text-white" />
+                      </div>
                       Predicción de Cancelación
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div className="text-center">
-                          <div className="text-4xl font-bold mb-2">
-                            {Math.round(
-                              predictionResult.probabilidad_cancelacion * 100
-                            )}
-                            %
+                  <CardContent className="space-y-6">
+                    {/* Probability Display */}
+                    <div className="text-center">
+                      <div className="relative inline-block">
+                        <div className="w-32 h-32 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center shadow-lg">
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-white">
+                              {Math.round(predictionResult.probabilidad_cancelacion * 100)}%
+                            </div>
+                            <div className="text-sm text-blue-100">Probabilidad</div>
                           </div>
+                        </div>
+                        <div className="absolute -top-2 -right-2">
                           <Badge
-                            variant={
+                            variant={predictionResult.probabilidad_cancelacion > 0.5 ? "destructive" : "default"}
+                            className={`px-3 py-1 rounded-full font-medium ${
                               predictionResult.probabilidad_cancelacion > 0.5
-                                ? "destructive"
-                                : "default"
-                            }
+                                ? "bg-red-100 text-red-800 border-red-200"
+                                : "bg-green-100 text-green-800 border-green-200"
+                            }`}
                           >
                             {predictionResult.prediccion}
                           </Badge>
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Probabilidad de cancelación</span>
-                            <span>
-                              {Math.round(
-                                predictionResult.probabilidad_cancelacion * 100
-                              )}
-                              %
-                            </span>
-                          </div>
-                          <Progress
-                            value={
-                              predictionResult.probabilidad_cancelacion * 100
-                            }
-                            className="h-3"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <h4 className="font-semibold">Factores Influyentes</h4>
-                        <div className="space-y-2">
-                          {predictionResult.explicacion_shap?.map(
-                            (item, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-2 text-sm"
-                              >
-                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                <span className="capitalize">
-                                  {item.feature
-                                    .replace("num__", "")
-                                    .replace("_", " ")}{" "}
-                                  ({item.impact > 0 ? "+" : ""}
-                                  {item.impact.toFixed(3)})
-                                </span>
-                              </div>
-                            )
-                          )}
-                        </div>
                       </div>
                     </div>
 
-                    <Separator className="my-4" />
+                    {/* Progress Bar */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Probabilidad de cancelación</span>
+                        <span className="font-medium text-gray-900">
+                          {Math.round(predictionResult.probabilidad_cancelacion * 100)}%
+                        </span>
+                      </div>
+                      <Progress
+                        value={predictionResult.probabilidad_cancelacion * 100}
+                        className="h-3 bg-gray-200"
+                      />
+                    </div>
 
-                    <Alert>
-                      <div className="flex items-center gap-2">
-                        {
-                          getRecommendation(
-                            predictionResult.probabilidad_cancelacion
-                          ).icon
-                        }
-                        <AlertDescription>
+                    {/* Influencing Factors */}
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <Shield className="w-5 h-5 text-blue-600" />
+                        Factores Influyentes
+                      </h4>
+                      <div className="space-y-3">
+                        {predictionResult.explicacion_shap?.map((item, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                          >
+                            <span className="capitalize text-gray-700">
+                              {item.feature.replace("num__", "").replace("_", " ")}
+                            </span>
+                            <span className={`font-medium ${
+                              item.impact > 0 ? "text-red-600" : "text-green-600"
+                            }`}>
+                              {item.impact > 0 ? "+" : ""}{item.impact.toFixed(3)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recommendation Alert */}
+                    <Alert className={`border-2 ${getRecommendation(predictionResult.probabilidad_cancelacion).borderColor} ${getRecommendation(predictionResult.probabilidad_cancelacion).bgColor}`}>
+                      <div className="flex items-center gap-3">
+                        {getRecommendation(predictionResult.probabilidad_cancelacion).icon}
+                        <AlertDescription className="text-gray-800">
                           <strong>Recomendación:</strong>{" "}
-                          {
-                            getRecommendation(
-                              predictionResult.probabilidad_cancelacion
-                            ).text
-                          }
+                          {getRecommendation(predictionResult.probabilidad_cancelacion).text}
                         </AlertDescription>
                       </div>
                     </Alert>
@@ -381,58 +556,68 @@ export default function EvaluateReservation({
                 </Card>
               )}
 
-              {/* Segmentación de Clientes */}
+              {/* Customer Segmentation Card */}
               {clusterResult && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="w-5 h-5" />
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-2xl">
+                  <CardHeader className="pb-6">
+                    <CardTitle className="flex items-center gap-3 text-2xl">
+                      <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+                        <Users className="w-6 h-6 text-white" />
+                      </div>
                       Segmentación de Cliente
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div>
-                          <Badge
-                            variant="outline"
-                            className="text-lg px-4 py-2"
-                          >
-                            Segmento {clusterResult.cluster}
-                          </Badge>
-                          <h3 className="text-xl font-semibold mt-2">
-                            {clusterResult.cluster_name}
-                          </h3>
-                        </div>
+                  <CardContent className="space-y-6">
+                    {/* Cluster Info */}
+                    <div className="text-center">
+                      <Badge variant="outline" className="text-xl px-6 py-3 rounded-full border-2 border-purple-200">
+                        Segmento {clusterResult.cluster}
+                      </Badge>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-3">
+                        {clusterResult.cluster_name}
+                      </h3>
+                    </div>
 
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="w-4 h-4 text-green-600" />
-                            <span className="text-sm">
-                              Tasa de cancelación del segmento:
-                            </span>
-                          </div>
-                          <div className="text-2xl font-bold text-green-600">
-                            {Math.round(clusterResult.cancellation_rate * 100)}%
-                          </div>
-                        </div>
+                    {/* Cancellation Rate */}
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <DollarSign className="w-6 h-6 text-purple-600" />
+                        <span className="font-semibold text-gray-900">
+                          Tasa de cancelación del segmento
+                        </span>
                       </div>
-
-                      <div className="space-y-4">
-                        <h4 className="font-semibold">
-                          Estrategia Recomendada
-                        </h4>
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                          <p className="text-sm text-blue-800">
-                            {clusterResult.strategy}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <MapPin className="w-4 h-4" />
-                          <span>Perfil de cliente identificado</span>
-                        </div>
+                      <div className="text-4xl font-bold text-purple-600">
+                        {Math.round(clusterResult.cancellation_rate * 100)}%
                       </div>
+                    </div>
+
+                    {/* Strategy */}
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <Target className="w-5 h-5 text-purple-600" />
+                        Estrategia Recomendada
+                      </h4>
+                      <div className={`p-4 rounded-xl border-2 ${clusterResult.strategy_color.replace('text-', 'bg-').replace('-600', '-50')} ${clusterResult.strategy_color.replace('text-', 'border-').replace('-600', '-200')}`}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`p-2 rounded-lg ${clusterResult.strategy_color.replace('text-', 'bg-').replace('-600', '-100')}`}>
+                            {clusterResult.strategy_icon}
+                          </div>
+                          <h5 className="font-semibold text-gray-900">
+                            Estrategia Seleccionada
+                          </h5>
+                        </div>
+                        <p className="text-gray-800 leading-relaxed">
+                          {clusterResult.strategy}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Profile Indicator */}
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                      <MapPin className="w-5 h-5 text-gray-600" />
+                      <span className="text-gray-700 font-medium">
+                        Perfil de cliente identificado y analizado
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
