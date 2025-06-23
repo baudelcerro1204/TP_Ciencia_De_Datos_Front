@@ -72,108 +72,58 @@ interface ClusterResult {
   strategy_color: string
 }
 
-// Definición de estrategias por segmento
+// Definición de estrategias por segmento (actualizado para k=2)
 const SEGMENT_STRATEGIES = {
   0: [
     {
-      name: "Recordatorio Personalizado",
-      description: "Enviar recordatorio personalizado 7 días antes de la llegada con detalles específicos de la reserva y beneficios exclusivos.",
-      icon: <MessageSquare className="w-5 h-5" />,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200"
-    },
-    {
-      name: "Programa de Fidelización",
-      description: "Ofrecer puntos de fidelización adicionales y acceso anticipado a promociones especiales para reservas anticipadas.",
-      icon: <Star className="w-5 h-5" />,
+      name: "Atención Familiar Premium",
+      description: "Ofrecer servicios exclusivos para familias, como habitaciones conectadas, amenities para niños y descuentos en actividades familiares. Comunicación personalizada destacando beneficios premium.",
+      icon: <Gift className="w-5 h-5" />, 
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",
       borderColor: "border-yellow-200"
     },
     {
-      name: "Confirmación Proactiva",
-      description: "Contacto telefónico 14 días antes para confirmar detalles y ofrecer servicios adicionales personalizados.",
-      icon: <Phone className="w-5 h-5" />,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200"
-    },
-    {
-      name: "Beneficios Anticipados",
-      description: "Descuento del 10% en servicios adicionales y upgrade gratuito de habitación si está disponible.",
-      icon: <Gift className="w-5 h-5" />,
+      name: "Upgrade y Beneficios",
+      description: "Proponer upgrades gratuitos o con descuento, desayuno incluido y check-out extendido para reservas familiares de alto valor.",
+      icon: <Star className="w-5 h-5" />, 
       color: "text-purple-600",
       bgColor: "bg-purple-50",
       borderColor: "border-purple-200"
+    },
+    {
+      name: "Recordatorio Anticipado",
+      description: "Enviar recordatorio personalizado 10 días antes de la llegada, resaltando servicios para niños y actividades familiares.",
+      icon: <MessageSquare className="w-5 h-5" />, 
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-200"
     }
   ],
   1: [
     {
-      name: "Oferta de Valor",
-      description: "Paquete especial con desayuno incluido y acceso gratuito al spa por reservas de planificación media.",
-      icon: <Gift className="w-5 h-5" />,
+      name: "Oferta Flexible",
+      description: "Ofrecer condiciones flexibles de reserva y cancelación, y destacar promociones para reservas anticipadas.",
+      icon: <Clock className="w-5 h-5" />, 
       color: "text-green-600",
       bgColor: "bg-green-50",
       borderColor: "border-green-200"
     },
     {
-      name: "Comunicación Estratégica",
-      description: "Serie de emails informativos sobre servicios del hotel y actividades locales 10 días antes de la llegada.",
-      icon: <MessageSquare className="w-5 h-5" />,
+      name: "Comunicación Eficiente",
+      description: "Enviar emails informativos sobre servicios y actividades del hotel, enfatizando la facilidad y rapidez del proceso de check-in.",
+      icon: <MessageSquare className="w-5 h-5" />, 
       color: "text-blue-600",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200"
     },
     {
-      name: "Flexibilidad de Reserva",
-      description: "Permitir cambios de fecha sin cargo hasta 48 horas antes y opción de cancelación gratuita.",
-      icon: <Clock className="w-5 h-5" />,
+      name: "Beneficio por Anticipación",
+      description: "Ofrecer descuentos exclusivos o upgrades menores para incentivar la confirmación temprana de la reserva.",
+      icon: <Gift className="w-5 h-5" />, 
       color: "text-orange-600",
       bgColor: "bg-orange-50",
       borderColor: "border-orange-200"
-    },
-    {
-      name: "Experiencia Personalizada",
-      description: "Asignación de un concierge personal para coordinar servicios especiales y preferencias del huésped.",
-      icon: <Users className="w-5 h-5" />,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
-      borderColor: "border-purple-200"
-    }
-  ],
-  2: [
-    {
-      name: "Atención Premium",
-      description: "Servicio VIP con check-in prioritario, habitación preparada antes de la llegada y amenities de lujo.",
-      icon: <Star className="w-5 h-5" />,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-50",
-      borderColor: "border-yellow-200"
-    },
-    {
-      name: "Confirmación Inmediata",
-      description: "Contacto telefónico inmediato para confirmar la reserva y coordinar servicios especiales requeridos.",
-      icon: <Phone className="w-5 h-5" />,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200"
-    },
-    {
-      name: "Gestión de Expectativas",
-      description: "Comunicación clara sobre políticas de cancelación y opciones de reembolso para reservas especiales.",
-      icon: <MessageSquare className="w-5 h-5" />,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200"
-    },
-    {
-      name: "Servicios Exclusivos",
-      description: "Acceso a servicios premium como traslado desde el aeropuerto y reservas en restaurantes exclusivos.",
-      icon: <Gift className="w-5 h-5" />,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
-      borderColor: "border-purple-200"
     }
   ]
 };
@@ -225,12 +175,17 @@ export default function EvaluateReservation({
   
       const result = await response.json()
       
+      // Asignar nombres de cluster según nueva segmentación
+      const clusterNames = [
+        "Reservas familiares premium",
+        "Reservas estándar anticipadas"
+      ];
       // Seleccionar estrategia aleatoria
       const randomStrategy = getRandomStrategy(result.cluster);
       
       setClusterResult({
         cluster: result.cluster,
-        cluster_name: result.cluster_nombre,
+        cluster_name: clusterNames[result.cluster] || `Segmento ${result.cluster}`,
         cancellation_rate: result.probabilidad_cancelacion_cluster,
         strategy: randomStrategy.description,
         strategy_icon: randomStrategy.icon,
@@ -571,10 +526,12 @@ export default function EvaluateReservation({
                     {/* Cluster Info */}
                     <div className="text-center">
                       <Badge variant="outline" className="text-xl px-6 py-3 rounded-full border-2 border-purple-200">
-                        Segmento {clusterResult.cluster}
+                        {clusterResult.cluster === 0 ? "Reservas familiares premium" : "Reservas estándar anticipadas"}
                       </Badge>
                       <h3 className="text-2xl font-bold text-gray-900 mt-3">
-                        {clusterResult.cluster_name}
+                        {clusterResult.cluster === 0
+                          ? "Familias con presupuesto elevado, reservas con lead_time medio, niños y ADR alto."
+                          : "Clientes estándar, reservas anticipadas, sin niños y ADR más bajo."}
                       </h3>
                     </div>
 
@@ -599,7 +556,7 @@ export default function EvaluateReservation({
                       </h4>
                       <div className={`p-4 rounded-xl border-2 ${clusterResult.strategy_color.replace('text-', 'bg-').replace('-600', '-50')} ${clusterResult.strategy_color.replace('text-', 'border-').replace('-600', '-200')}`}>
                         <div className="flex items-center gap-3 mb-3">
-                          <div className={`p-2 rounded-lg ${clusterResult.strategy_color.replace('text-', 'bg-').replace('-600', '-100')}`}>
+                          <div className={`p-2 rounded-lg ${clusterResult.strategy_color.replace('text-', 'bg-').replace('-600', '-100')}`}> 
                             {clusterResult.strategy_icon}
                           </div>
                           <h5 className="font-semibold text-gray-900">
